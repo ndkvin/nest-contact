@@ -234,4 +234,75 @@ describe('UserController', () => {
       expect(response.body.data).toEqual(true);
     })
   });
+
+  describe('PATCH /api/user/current', () => {
+    beforeAll(async () => {
+      await testService.deleteUser();
+      await testService.createUser();
+    })
+
+    it('should be reject if token is not send', async () => {
+      const response = await request(app.getHttpServer()).patch(
+        '/api/user/current',
+      );
+
+      logger.info(response.body);
+      expect(response.status).toBe(401);
+      expect(response.body.errors).toBeDefined();
+    });
+
+    it('should be reject if token is invalid', async () => {
+      const response = await request(app.getHttpServer())
+        .patch('/api/user/current')
+        .set('Authorization', 'wrongtoken');
+
+      logger.info(response.body);
+      expect(response.status).toBe(401);
+      expect(response.body.errors).toBeDefined();
+    });
+
+    it('should throw error when validation error', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/user/login')
+        .send({
+          username: 'test',
+          password: 'testtest',
+        });
+
+      const user = res.body.data;
+
+      const response = await request(app.getHttpServer())
+        .patch('/api/user/current')
+        .send({
+          name: "1"
+        })
+        .set('Authorization', user.token);
+
+      logger.info(response.body);
+      expect(response.status).toBe(400);
+      expect(response.body.errors).toBeDefined();
+    });
+
+    it('should be able to get current user', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/user/login')
+        .send({
+          username: 'test',
+          password: 'testtest',
+        });
+
+      const user = res.body.data;
+
+      const response = await request(app.getHttpServer())
+        .patch('/api/user/current')
+        .send({
+          name: "Budi"
+        })
+        .set('Authorization', user.token);
+
+      logger.info(response.body);
+      expect(response.status).toBe(200);
+      expect(response.body.data.name).toEqual("Budi");
+    })
+  });
 });

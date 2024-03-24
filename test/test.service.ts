@@ -23,7 +23,5 @@ export class TestService {
         token: "test"
       }
     });
-
-    console.log("User created: ", use); 
   }
 }
