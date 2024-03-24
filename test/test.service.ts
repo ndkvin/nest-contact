@@ -6,6 +6,11 @@ import * as bcrypt from "bcrypt";
 export class TestService {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async deleteAll(): Promise<void> {
+    await this.deleteContact();
+    await this.deleteUser();
+  }
+
   async deleteUser(): Promise<void> {
     await this.prismaService.user.deleteMany({
       where: {
@@ -14,8 +19,16 @@ export class TestService {
     });
   }
 
+  async deleteContact(): Promise<void> {
+    await this.prismaService.contact.deleteMany({
+      where: {
+        first_name: "test"
+      }
+    });
+  }
+
   async createUser(): Promise<void> {
-    const use = await this.prismaService.user.create({
+    await this.prismaService.user.create({
       data: {
         username: "test",
         password: await bcrypt.hash("testtest", 10),
@@ -23,5 +36,21 @@ export class TestService {
         token: "test"
       }
     });
+  }
+
+  async createContact(): Promise<void> {
+    await this.prismaService.contact.create({
+      data: {
+        first_name: "test",
+        last_name: "test",
+        phone: "08123456789",
+        email: "test@gmail.com",
+        users: { 
+          connect: { 
+            username: 'test' 
+          } 
+        },
+      }
+    })
   }
 }

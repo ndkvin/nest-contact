@@ -124,13 +124,13 @@ export class UserService {
     request: UpdateUserRequest,
   ): Promise<UserResponse> {
     this.logger.info(`Updating user ${username} with ${JSON.stringify(request)}`);
-    await this.validationService.validate(UserValidation.UPDATE, request);
+    const updateRequest = await this.validationService.validate(UserValidation.UPDATE, request);
     const user = await this.prismaService.user.update({
       where: {
         username,
       },
       data: {
-        name: request.name,
+        name: updateRequest.name,
       },
     });
 
