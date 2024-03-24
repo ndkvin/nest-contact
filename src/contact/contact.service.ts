@@ -1,11 +1,20 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import { ContactResponse, CreateContactRequest, UpdateContactRequest } from 'src/model/contact.model';
+import {
+  ContactResponse,
+  CreateContactRequest,
+  UpdateContactRequest,
+} from 'src/model/contact.model';
 import { ContactValidation } from './contact.validation';
-import { Contact, User } from '@prisma/client';
+import { Contact } from '@prisma/client';
 
 @Injectable()
 export class ContactService {
@@ -26,7 +35,7 @@ export class ContactService {
   }
 
   async create(
-    user: User,
+    username: string,
     request: CreateContactRequest,
   ): Promise<ContactResponse> {
     this.logger.info(`Creating contact ${JSON.stringify(request)}`);
@@ -39,7 +48,7 @@ export class ContactService {
       data: {
         ...contactRequest,
         ...{
-          username: user.username,
+          username: username,
         },
       },
     });
@@ -47,14 +56,20 @@ export class ContactService {
     return this.toContactResponse(contact);
   }
 
-  async update(request: UpdateContactRequest, id: number): Promise<ContactResponse> {
+  async update(
+    username: string,
+    id: number,
+    request: UpdateContactRequest,
+  ): Promise<ContactResponse> {
     this.logger.info(`Updating contact ${JSON.stringify(request)}`);
     const contactRequest = this.validationService.validate(
       ContactValidation.UPDATE,
       request,
     );
 
-    const contact = await this.prismaService.contact.update({
+    let contact = await this.get(username, id)
+
+    const result = await this.prismaService.contact.update({
       where: {
         id: id,
       },
@@ -63,6 +78,25 @@ export class ContactService {
       },
     });
 
+    return this.toContactResponse(result);
+  }
+
+  async get(username: string, id: number): Promise<ContactResponse> {
+    const contact = await this.prismaService.contact.findFirst({
+      where: {
+        id: id,
+      },
+    });
+
+    if(!contact) {
+      throw new HttpException('Contact Not Found', HttpStatus.NOT_FOUND)
+    }
+
+    if (contact.username != username)
+      throw new HttpException(
+        'You dont have access to modify this resourse',
+        HttpStatus.FORBIDDEN,
+      );
     return this.toContactResponse(contact);
   }
 }
