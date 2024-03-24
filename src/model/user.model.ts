@@ -9,3 +9,8 @@ export class UserResponse {
   name: String;
   token?: string;
 }
+
+export class LoginUserRequest {
+  username: string;
+  password: string;
+}
