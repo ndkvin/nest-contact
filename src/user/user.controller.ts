@@ -1,14 +1,16 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { WebResponse } from '../model/web.model';
 import { LoginUserRequest, RegisterUserRequest, UserResponse } from '../model/user.model';
+import { Auth } from '../common/auth.decorator';
+import { User } from '@prisma/client';
 
 @Controller('/api/user')
 export class UserController {
   constructor(private userService: UserService) {}
 
   @Post('/register')
-  @HttpCode(201)
+  @HttpCode(HttpStatus.CREATED)
   async register(
     @Body() request: RegisterUserRequest,
   ): Promise<WebResponse<UserResponse>> {
@@ -20,7 +22,7 @@ export class UserController {
   }
 
   @Post('/login')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   async login(
     @Body() request: LoginUserRequest,
   ): Promise<WebResponse<UserResponse>> {
@@ -28,6 +30,26 @@ export class UserController {
 
     return {
       data: user,
+    };
+  }
+
+  @Get('/current')
+  @HttpCode(HttpStatus.OK)
+  async current(@Auth() user: User): Promise<WebResponse<UserResponse>> {
+    const result = await this.userService.get(user)
+
+    return {
+      data: result,
+    };
+  }
+
+  @Delete('/current')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Auth() user: User): Promise<WebResponse<boolean>> {
+    await this.userService.logout(user.username);
+
+    return {
+      data: true,
     };
   }
 }

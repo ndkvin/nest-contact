@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
 import { v4 as uuid } from 'uuid';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -91,5 +92,28 @@ export class UserService {
       name: user.name,
       token,
     };
+  }
+
+  async get(user: User): Promise<UserResponse> {
+    return {
+      username: user.username,
+      name: user.name,
+    }
+  }
+
+  async logout(username: string): Promise<UserResponse> {
+    const user = await this.prismaService.user.update({
+      where: {
+        username,
+      },
+      data: {
+        token: null,
+      }
+    });
+
+    return {
+      username: user.username,
+      name: user.name,
+    }
   }
 }

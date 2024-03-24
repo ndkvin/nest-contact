@@ -15,12 +15,15 @@ export class TestService {
   }
 
   async createUser(): Promise<void> {
-    await this.prismaService.user.create({
+    const use = await this.prismaService.user.create({
       data: {
         username: "test",
         password: await bcrypt.hash("testtest", 10),
-        name: "test"
+        name: "test",
+        token: "test"
       }
     });
+
+    console.log("User created: ", use); 
   }
 }
